@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>狗狗歲數計算機 - 記憶版</title>
+    <title>狗狗歲數計算機</title>
     
-    <link rel="icon" type="image/png" href="./icon.png">
-    <link rel="apple-touch-icon" href="./icon.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="./icon.png">
+    <link rel="icon" type="image/png" href="icon.png">
+    <link rel="apple-touch-icon" href="icon.png">
+    <link rel="apple-touch-icon-precomposed" href="icon.png">
 
     <style>
         :root {
@@ -16,33 +16,34 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif;
             margin: 0;
             padding: 0;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            /* 狗狗底圖 */
+            /* 背景圖：使用充滿溫暖感的狗狗底圖 */
             background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), 
-                        url('https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&q=80&w=1920') no-repeat center center fixed;
+                        url('https://images.unsplash.com/photo-1534361960057-19889dbad6bc?auto=format&fit=crop&q=80&w=1920') no-repeat center center fixed;
             background-size: cover;
             color: #fff;
         }
 
         .container {
             background: rgba(255, 255, 255, 0.95);
-            padding: 2rem;
-            border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.4);
             width: 90%;
-            max-width: 450px;
+            max-width: 420px;
             color: var(--dark-color);
             text-align: center;
         }
 
         h1 {
             color: var(--primary-color);
+            margin-top: 0;
             margin-bottom: 1.5rem;
             font-size: 1.8rem;
         }
@@ -54,15 +55,16 @@
 
         label {
             display: block;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.8rem;
             font-weight: bold;
+            font-size: 1.1rem;
         }
 
         input[type="date"] {
             width: 100%;
-            padding: 10px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
+            padding: 12px;
+            border: 2px solid #eee;
+            border-radius: 10px;
             font-size: 1rem;
             box-sizing: border-box;
             outline: none;
@@ -75,20 +77,21 @@
 
         button {
             width: 100%;
-            padding: 12px;
-            background-color: #ccc;
+            padding: 14px;
+            background-color: #bdc3c7; /* 預設禁用色 */
             color: white;
             border: none;
-            border-radius: 8px;
-            font-size: 1.1rem;
+            border-radius: 10px;
+            font-size: 1.2rem;
             font-weight: bold;
             cursor: not-allowed;
-            transition: all 0.3s;
+            transition: all 0.3s ease;
         }
 
         button.active {
             background-color: var(--primary-color);
             cursor: pointer;
+            box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3);
         }
 
         button.active:hover {
@@ -97,21 +100,23 @@
         }
 
         #resultArea {
-            margin-top: 1.5rem;
-            padding: 1rem;
-            border-top: 2px dashed #eee;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 2px dashed #ecf0f1;
             display: none;
         }
 
         .result-text {
-            font-size: 1.1rem;
-            line-height: 1.6;
+            font-size: 1.15rem;
+            line-height: 1.8;
+            margin: 0;
         }
 
         .highlight {
             color: var(--primary-color);
-            font-size: 1.4rem;
-            font-weight: bold;
+            font-size: 1.6rem;
+            font-weight: 900;
+            margin: 0 4px;
         }
     </style>
 </head>
@@ -121,7 +126,7 @@
         <h1>狗狗歲數計算機</h1>
         
         <div class="input-group">
-            <label for="birthDate">選擇狗狗的出生日期：</label>
+            <label for="birthDate">狗狗的出生日期：</label>
             <input type="date" id="birthDate">
         </div>
 
@@ -129,8 +134,8 @@
 
         <div id="resultArea">
             <p class="result-text">
-                現在大約 <span id="dogAgeDisplay" class="highlight">0.0</span> 歲狗年齡。<br>
-                換算人類年齡大約 <span id="humanAgeDisplay" class="highlight">0.0</span> 歲。
+                現在大約<span id="dogAgeDisplay" class="highlight">0.0</span>歲狗年齡。<br>
+                換算人類年齡大約<span id="humanAgeDisplay" class="highlight">0.0</span>歲。
             </p>
         </div>
     </div>
@@ -142,64 +147,76 @@
         const dogAgeDisplay = document.getElementById('dogAgeDisplay');
         const humanAgeDisplay = document.getElementById('humanAgeDisplay');
 
-        // 設定日期上限為今天
+        // 限制日期不能選未來
         birthDateInput.max = new Date().toISOString().split('T')[0];
 
-        // 頁面載入時從 localStorage 讀取資料
+        // --- 初始化：從 localStorage 載入資料 ---
         window.addEventListener('DOMContentLoaded', () => {
             const savedDate = localStorage.getItem('dogBirthDate');
-            const savedDogAge = localStorage.getItem('dogAgeResult');
-            const savedHumanAge = localStorage.getItem('humanAgeResult');
-
             if (savedDate) {
                 birthDateInput.value = savedDate;
-                calcBtn.disabled = false;
-                calcBtn.classList.add('active');
+                toggleButton(true);
                 
+                // 載入先前的計算結果
+                const savedDogAge = localStorage.getItem('dogAgeResult');
+                const savedHumanAge = localStorage.getItem('humanAgeResult');
                 if (savedDogAge && savedHumanAge) {
                     showResult(savedDogAge, savedHumanAge);
                 }
             }
         });
 
-        // 監聽日期變動
+        // 監聽日期輸入
         birthDateInput.addEventListener('change', () => {
-            if (birthDateInput.value) {
-                calcBtn.disabled = false;
-                calcBtn.classList.add('active');
-            } else {
-                calcBtn.disabled = true;
-                calcBtn.classList.remove('active');
-            }
+            toggleButton(!!birthDateInput.value);
         });
 
-        // 計算按鈕點擊事件
+        // 計算邏輯
         calcBtn.addEventListener('click', () => {
             const birthDateValue = birthDateInput.value;
             const birthDate = new Date(birthDateValue);
-            const now = new Date();
+            const today = new Date();
             
-            // 計算狗年齡 (天數 / 365.25)
-            const diffTime = Math.abs(now - birthDate);
-            const dogAge = (diffTime / (1000 * 60 * 60 * 24) / 365.25).toFixed(1);
+            // 計算實際狗年齡 (天數 / 365.25)
+            const diffTime = Math.abs(today - birthDate);
+            const dogAge = diffTime / (1000 * 60 * 60 * 24) / 365.25;
 
-            // 換算人類年齡 (16 * ln(dogAge) + 31)
+            // 換算人類年齡 (參考科學公式)
             let humanAge = 0;
             if (dogAge > 0) {
-                humanAge = dogAge < 1 ? (dogAge * 31).toFixed(1) : (16 * Math.log(dogAge) + 31).toFixed(1);
+                if (dogAge < 1) {
+                    humanAge = dogAge * 31; // 幼犬線性換算
+                } else {
+                    humanAge = 16 * Math.log(dogAge) + 31; // 成犬對數換算
+                }
             }
 
-            showResult(dogAge, humanAge);
+            const finalDogAge = dogAge.toFixed(1);
+            const finalHumanAge = humanAge.toFixed(1);
 
-            // 存儲到 localStorage
+            // 顯示結果
+            showResult(finalDogAge, finalHumanAge);
+
+            // 存入 localStorage
             localStorage.setItem('dogBirthDate', birthDateValue);
-            localStorage.setItem('dogAgeResult', dogAge);
-            localStorage.setItem('humanAgeResult', humanAge);
+            localStorage.setItem('dogAgeResult', finalDogAge);
+            localStorage.setItem('humanAgeResult', finalHumanAge);
         });
 
-        function showResult(dog, human) {
-            dogAgeDisplay.textContent = dog;
-            humanAgeDisplay.textContent = human;
+        // 輔助函式：切換按鈕狀態
+        function toggleButton(isActive) {
+            calcBtn.disabled = !isActive;
+            if (isActive) {
+                calcBtn.classList.add('active');
+            } else {
+                calcBtn.classList.remove('active');
+            }
+        }
+
+        // 輔助函式：顯示結果區塊
+        function showResult(dogAge, humanAge) {
+            dogAgeDisplay.textContent = dogAge;
+            humanAgeDisplay.textContent = humanAge;
             resultArea.style.display = 'block';
         }
     </script>
