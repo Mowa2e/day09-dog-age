@@ -3,10 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>狗狗歲數計算機 - 快捷APP</title>
+    <title>狗狗歲數計算機 - 記憶優化版</title>
+
+    <!-- favicon / iOS icon -->
     <link rel="icon" type="image/png" href="./icon.png">
     <link rel="apple-touch-icon" href="./icon.png">
     <link rel="apple-touch-icon" sizes="180x180" href="./icon.png">
+
     <style>
         :root {
             --primary-color: #f39c12;
@@ -14,7 +17,7 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             margin: 0;
             padding: 0;
             display: flex;
@@ -41,7 +44,6 @@
         h1 {
             color: var(--primary-color);
             margin-bottom: 1.5rem;
-            font-size: 1.8rem;
         }
 
         .input-group {
@@ -50,8 +52,6 @@
         }
 
         label {
-            display: block;
-            margin-bottom: 0.5rem;
             font-weight: bold;
         }
 
@@ -60,27 +60,34 @@
             padding: 10px;
             border: 2px solid #ddd;
             border-radius: 8px;
-            font-size: 1rem;
-            box-sizing: border-box;
-            outline: none;
+            margin-top: 5px;
         }
 
         button {
             width: 100%;
             padding: 12px;
-            background-color: #ccc;
-            color: white;
-            border: none;
+            margin-top: 10px;
             border-radius: 8px;
-            font-size: 1.1rem;
+            border: none;
             font-weight: bold;
-            cursor: not-allowed;
-            transition: all 0.3s;
+            font-size: 1rem;
+            cursor: pointer;
         }
 
-        button.active {
+        #calcBtn {
+            background-color: #ccc;
+            color: white;
+            cursor: not-allowed;
+        }
+
+        #calcBtn.active {
             background-color: var(--primary-color);
             cursor: pointer;
+        }
+
+        #clearBtn {
+            background-color: #e74c3c;
+            color: white;
         }
 
         #resultArea {
@@ -97,99 +104,125 @@
         }
     </style>
 </head>
+
 <body>
 
-    <div class="container">
-        <h1>狗狗歲數計算機</h1>
-        
-        <div class="input-group">
-            <label for="birthDate">選擇狗狗的出生日期：</label>
-            <input type="date" id="birthDate">
-        </div>
+<div class="container">
+    <h1>🐶 狗狗歲數計算機</h1>
 
-        <button id="calcBtn" disabled>開始計算</button>
-
-        <div id="resultArea">
-            <p>
-                現在大約 <span id="dogAgeDisplay" class="highlight">0.0</span> 歲狗年齡。<br>
-                換算人類年齡大約 <span id="humanAgeDisplay" class="highlight">0.0</span> 歲。
-            </p>
-        </div>
+    <div class="input-group">
+        <label for="birthDate">選擇狗狗出生日期：</label>
+        <input type="date" id="birthDate">
     </div>
 
-    <script>
-        const birthDateInput = document.getElementById('birthDate');
-        const calcBtn = document.getElementById('calcBtn');
-        const resultArea = document.getElementById('resultArea');
-        const dogAgeDisplay = document.getElementById('dogAgeDisplay');
-        const humanAgeDisplay = document.getElementById('humanAgeDisplay');
+    <button id="calcBtn">開始計算</button>
+    <button id="clearBtn">清除紀錄</button>
 
-        // 設定日期上限為今天
-        birthDateInput.max = new Date().toISOString().split('T')[0];
+    <div id="resultArea">
+        <p>
+            狗狗年齡：約 <span id="dogAgeDisplay" class="highlight">0.0</span> 歲<br>
+            人類年齡：約 <span id="humanAgeDisplay" class="highlight">0.0</span> 歲
+        </p>
+    </div>
+</div>
 
-        // --- 核心邏輯：網頁載入時檢查 localStorage ---
-        window.addEventListener('DOMContentLoaded', () => {
-            const savedDate = localStorage.getItem('dogBirthDate');
-            const savedDogAge = localStorage.getItem('dogAgeResult');
-            const savedHumanAge = localStorage.getItem('humanAgeResult');
+<script>
+const birthDateInput = document.getElementById('birthDate');
+const calcBtn = document.getElementById('calcBtn');
+const clearBtn = document.getElementById('clearBtn');
+const resultArea = document.getElementById('resultArea');
+const dogAgeDisplay = document.getElementById('dogAgeDisplay');
+const humanAgeDisplay = document.getElementById('humanAgeDisplay');
 
-            if (savedDate) {
-                birthDateInput.value = savedDate;
-                // 啟用按鈕
-                calcBtn.disabled = false;
-                calcBtn.classList.add('active');
-                
-                // 如果有先前的計算結果，直接顯示
-                if (savedDogAge && savedHumanAge) {
-                    displayResults(savedDogAge, savedHumanAge);
-                }
-            }
-        });
+// 限制最大日期為今天
+const today = new Date().toISOString().split('T')[0];
+birthDateInput.max = today;
 
-        // 監聽輸入框變動
-        birthDateInput.addEventListener('change', () => {
-            if (birthDateInput.value) {
-                calcBtn.disabled = false;
-                calcBtn.classList.add('active');
-            } else {
-                calcBtn.disabled = true;
-                calcBtn.classList.remove('active');
-            }
-        });
+// 初始化
+window.addEventListener('DOMContentLoaded', () => {
+    const savedDate = localStorage.getItem('dogBirthDate');
 
-        // 點擊計算按鈕
-        calcBtn.addEventListener('click', () => {
-            const birthDateValue = birthDateInput.value;
-            const birthDate = new Date(birthDateValue);
-            const now = new Date();
-            
-            const diffTime = Math.abs(now - birthDate);
-            const dogAge = (diffTime / (1000 * 60 * 60 * 24) / 365.25).toFixed(1);
+    if (savedDate) {
+        birthDateInput.value = savedDate;
+        activateButton();
+        calculateAge(savedDate); // 重新計算
+    } else {
+        deactivateButton();
+    }
+});
 
-            let humanAge = 0;
-            if (dogAge <= 0) {
-                humanAge = 0;
-            } else if (dogAge < 1) {
-                humanAge = (dogAge * 31).toFixed(1);
-            } else {
-                humanAge = (16 * Math.log(dogAge) + 31).toFixed(1);
-            }
+// 監聽輸入
+birthDateInput.addEventListener('change', () => {
+    if (birthDateInput.value) {
+        activateButton();
+    } else {
+        deactivateButton();
+    }
+});
 
-            // 顯示結果
-            displayResults(dogAge, humanAge);
+// 計算按鈕
+calcBtn.addEventListener('click', () => {
+    calculateAge(birthDateInput.value);
+});
 
-            // --- 核心邏輯：存入 localStorage ---
-            localStorage.setItem('dogBirthDate', birthDateValue);
-            localStorage.setItem('dogAgeResult', dogAge);
-            localStorage.setItem('humanAgeResult', humanAge);
-        });
+// 清除紀錄
+clearBtn.addEventListener('click', () => {
+    localStorage.clear();
+    location.reload();
+});
 
-        // 顯示結果的函式
-        function displayResults(dogAge, humanAge) {
-            dogAgeDisplay.textContent = dogAge;
-            humanAgeDisplay.textContent = humanAge;
-            resultArea.style.display = 'block';
-        }
-    </script>
+// 啟用按鈕
+function activateButton() {
+    calcBtn.classList.add('active');
+    calcBtn.disabled = false;
+}
+
+// 停用按鈕
+function deactivateButton() {
+    calcBtn.classList.remove('active');
+    calcBtn.disabled = true;
+}
+
+// 計算邏輯
+function calculateAge(birthDateValue) {
+    const birthDate = new Date(birthDateValue);
+    const now = new Date();
+
+    // 防呆：未來日期
+    if (birthDate > now) {
+        alert('出生日期不能是未來！');
+        return;
+    }
+
+    const diffTime = Math.abs(now - birthDate);
+
+    const dogAge = parseFloat(
+        (diffTime / (1000 * 60 * 60 * 24) / 365.25).toFixed(1)
+    );
+
+    let humanAge = 0;
+
+    if (dogAge <= 0) {
+        humanAge = 0;
+    } else if (dogAge < 1) {
+        humanAge = parseFloat((dogAge * 31).toFixed(1));
+    } else {
+        humanAge = parseFloat((16 * Math.log(dogAge) + 31).toFixed(1));
+    }
+
+    displayResults(dogAge, humanAge);
+
+    // 儲存
+    localStorage.setItem('dogBirthDate', birthDateValue);
+}
+
+// 顯示結果
+function displayResults(dogAge, humanAge) {
+    dogAgeDisplay.textContent = dogAge;
+    humanAgeDisplay.textContent = humanAge;
+    resultArea.style.display = 'block';
+}
+</script>
+
 </body>
 </html>
