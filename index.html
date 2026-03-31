@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>狗狗歲數計算機 - 記憶版</title>
+    
+    <link rel="icon" type="image/png" href="./icon.png">
+    <link rel="apple-touch-icon" href="./icon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="./icon.png">
+
+    <style>
+        :root {
+            --primary-color: #f39c12;
+            --dark-color: #2c3e50;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            /* 狗狗底圖 */
+            background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), 
+                        url('https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&q=80&w=1920') no-repeat center center fixed;
+            background-size: cover;
+            color: #fff;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            width: 90%;
+            max-width: 450px;
+            color: var(--dark-color);
+            text-align: center;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+        }
+
+        .input-group {
+            margin-bottom: 1.5rem;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+
+        input[type="date"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input[type="date"]:focus {
+            border-color: var(--primary-color);
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #ccc;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: not-allowed;
+            transition: all 0.3s;
+        }
+
+        button.active {
+            background-color: var(--primary-color);
+            cursor: pointer;
+        }
+
+        button.active:hover {
+            background-color: #e67e22;
+            transform: translateY(-2px);
+        }
+
+        #resultArea {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            border-top: 2px dashed #eee;
+            display: none;
+        }
+
+        .result-text {
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        .highlight {
+            color: var(--primary-color);
+            font-size: 1.4rem;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>狗狗歲數計算機</h1>
+        
+        <div class="input-group">
+            <label for="birthDate">選擇狗狗的出生日期：</label>
+            <input type="date" id="birthDate">
+        </div>
+
+        <button id="calcBtn" disabled>開始計算</button>
+
+        <div id="resultArea">
+            <p class="result-text">
+                現在大約 <span id="dogAgeDisplay" class="highlight">0.0</span> 歲狗年齡。<br>
+                換算人類年齡大約 <span id="humanAgeDisplay" class="highlight">0.0</span> 歲。
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const birthDateInput = document.getElementById('birthDate');
+        const calcBtn = document.getElementById('calcBtn');
+        const resultArea = document.getElementById('resultArea');
+        const dogAgeDisplay = document.getElementById('dogAgeDisplay');
+        const humanAgeDisplay = document.getElementById('humanAgeDisplay');
+
+        // 設定日期上限為今天
+        birthDateInput.max = new Date().toISOString().split('T')[0];
+
+        // 頁面載入時從 localStorage 讀取資料
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedDate = localStorage.getItem('dogBirthDate');
+            const savedDogAge = localStorage.getItem('dogAgeResult');
+            const savedHumanAge = localStorage.getItem('humanAgeResult');
+
+            if (savedDate) {
+                birthDateInput.value = savedDate;
+                calcBtn.disabled = false;
+                calcBtn.classList.add('active');
+                
+                if (savedDogAge && savedHumanAge) {
+                    showResult(savedDogAge, savedHumanAge);
+                }
+            }
+        });
+
+        // 監聽日期變動
+        birthDateInput.addEventListener('change', () => {
+            if (birthDateInput.value) {
+                calcBtn.disabled = false;
+                calcBtn.classList.add('active');
+            } else {
+                calcBtn.disabled = true;
+                calcBtn.classList.remove('active');
+            }
+        });
+
+        // 計算按鈕點擊事件
+        calcBtn.addEventListener('click', () => {
+            const birthDateValue = birthDateInput.value;
+            const birthDate = new Date(birthDateValue);
+            const now = new Date();
+            
+            // 計算狗年齡 (天數 / 365.25)
+            const diffTime = Math.abs(now - birthDate);
+            const dogAge = (diffTime / (1000 * 60 * 60 * 24) / 365.25).toFixed(1);
+
+            // 換算人類年齡 (16 * ln(dogAge) + 31)
+            let humanAge = 0;
+            if (dogAge > 0) {
+                humanAge = dogAge < 1 ? (dogAge * 31).toFixed(1) : (16 * Math.log(dogAge) + 31).toFixed(1);
+            }
+
+            showResult(dogAge, humanAge);
+
+            // 存儲到 localStorage
+            localStorage.setItem('dogBirthDate', birthDateValue);
+            localStorage.setItem('dogAgeResult', dogAge);
+            localStorage.setItem('humanAgeResult', humanAge);
+        });
+
+        function showResult(dog, human) {
+            dogAgeDisplay.textContent = dog;
+            humanAgeDisplay.textContent = human;
+            resultArea.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
